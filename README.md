@@ -185,25 +185,36 @@ File-level failures (corrupt archive, incomplete shapefile, missing CRS, no feat
 
 - **KML → `EPSG:4326`** — mandated by the OGC KML specification; set explicitly (`set_crs`), not guessed.
 - **Shapefile → declared CRS only.** The `.prj` (or the CRS reported by GDAL) is the source of truth. If it is missing/unreadable, ingestion fails with `CRS_MISSING`. Guessing `4326` would silently produce wrong measurements, so the API refuses.
-- **Measurements never run in a geographic CRS.** `transform_geometry()` rejects any target where `crs.is_geographic` is true; the choice function only returns projected EPSG codes.
+- **Measurements never run in a geographic CRS.** `transform_geometry()` rejects any target where `crs.is_geographic` is true; the choice function only ever returns a projected CRS (a UTM/UPS EPSG code or a feature-centred azimuthal proj4 string).
 
 ### Feature-level projected-CRS selection
 
 Applied per feature (not per file), because a dataset can mix a small urban parcel with a country-spanning polygon:
 
-1. **Antimeridian** (geographic sources only): bbox width > 180° or coordinates on both sides of ±170° → fallback `EPSG:6933`. No UTM zone is valid across the seam.
+1. **Antimeridian** (geographic sources only): bbox width > 180° or coordinates on both sides of ±170° → feature-centred azimuthal fallback. No UTM zone is valid across the seam.
 2. **Polar**: representative latitude > 84° → UPS North `EPSG:32661`; < −80° → UPS South `EPSG:32761`.
 3. **Normal**: local UTM zone from the representative point — `zone = ⌊(lon+180)/6⌋+1` → `EPSG:326xx` (north) / `EPSG:327xx` (south). E.g. Bengaluru (≈77.6°E) → `EPSG:32643`.
-4. **Extensive**: lon-span > 6° or diagonal > ~1000 km → fallback `EPSG:6933` (EASE-Grid 2.0): global, metre-based, equal-area.
+4. **Extensive**: lon-span > 6° or diagonal > ~1000 km → feature-centred azimuthal fallback.
 
 Every feature row stores its own `measurement_crs` and a `crs_fallback` flag; the file stores a display summary (e.g. `EPSG:32643 (2/3 measured)` — points need no measurement, so they are excluded).
+
+### Fallback projection: feature-centred azimuthal
+
+No single planar projection is both equal-area and equidistant, so the fallback is chosen by what is being measured, centred on the feature's own representative point:
+
+| Geometry | Projection | Property that is preserved |
+|---|---|---|
+| `Polygon` / `MultiPolygon` | Lambert Azimuthal Equal-Area (`+proj=laea`) | area is exact |
+| `LineString` / `MultiLineString` | Azimuthal Equidistant (`+proj=aeqd`) | distance from the centre is exact |
+
+A global equal-area grid such as `EPSG:6933` (EASE-Grid 2.0) was **deliberately rejected**: it is equal-area but not equidistant, so it distorts line lengths by up to ~1.7× away from its standard parallel, and — read naively — it treats a ±179° dateline strip as ~358° wide, over-reporting its area by ~180×. The centred azimuthal projections avoid both problems: PROJ measures angles relative to the projection centre (`lon_0`), so a dateline-spanning feature projects to its true shape without manual longitude unwrapping (the centre itself is computed from an unwrapped copy so it lands on the seam). Fallback features are still flagged via `crs_fallback = true`, because azimuthal accuracy is only exact at/around the centre point.
 
 ### Trade-offs
 
 | Decision | Why | Cost |
 |---|---|---|
 | Per-feature UTM over one dataset-wide CRS | Local accuracy for small features; honest fallback flags for large ones | Features in one file can have different measurement CRS — comparability is per-zone |
-| `EPSG:6933` fallback | Global, metre-based, equal-area; areas stay meaningful | Lengths on fallback features are approximate (flagged via `crs_fallback`) |
+| Feature-centred azimuthal fallback (LAEA/AEQD) | Correct area *and* length for large / antimeridian features; no global-grid distortion | Fallback CRS is a proj4 string, not an EPSG code; accuracy is best near the feature centre (flagged via `crs_fallback`) |
 | Strict `CRS_MISSING` failure | No silent wrong answers | Some real-world files must be re-exported with a `.prj` before use |
 | Stored geometry stays in **source** CRS | Faithful to the uploaded data; measurements carry their own CRS record | Consumers must reproject themselves if they want to map-measure from the API geometry |
 
