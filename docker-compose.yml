@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - appdata:/data
+    environment:
+      DATABASE_URL: "sqlite:////data/app.db"
+      UPLOAD_DIR: "/data/uploads"
+
+volumes:
+  appdata:
