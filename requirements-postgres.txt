@@ -1,0 +1,4 @@
+# Optional: install only when deploying against PostgreSQL.
+# PostgreSQL is a compatible deployment target, not the canonical evaluation database.
+psycopg2-binary==2.9.13
+

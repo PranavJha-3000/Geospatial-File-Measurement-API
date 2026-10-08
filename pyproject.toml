@@ -1,0 +1,29 @@
+[project]
+name = "geospatial-file-measurement-api"
+version = "1.0.0"
+description = "FastAPI service that measures polygon area and line length in geospatial files"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    # FastAPI's dependency-injection idiom uses Depends()/File() as argument defaults.
+    "B008",
+]
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+exclude = ["tests/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
