@@ -117,8 +117,10 @@ def process_feature(geom: BaseGeometry | None, source_crs: str) -> FeatureResult
         )
 
     try:
-        measurement_crs, used_fallback = choose_projected_crs_for_feature(geom_2d, source_crs)
-        projected = transform_geometry(geom_2d, source_crs, measurement_crs)
+        measurement_crs, target, used_fallback = choose_projected_crs_for_feature(
+            geom_2d, source_crs
+        )
+        projected = transform_geometry(geom_2d, source_crs, target)
         # Hard guard: projected CRS only (transform_geometry also enforces this).
         if projected.is_empty:
             raise ValueError("projection produced empty geometry")
