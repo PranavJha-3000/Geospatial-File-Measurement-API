@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>unsupported</name>
+  <Placemark>
+    <name>mixed-geometry</name>
+    <MultiGeometry>
+      <Point>
+        <coordinates>77.5946,12.9716</coordinates>
+      </Point>
+      <LineString>
+        <coordinates>77.5946,12.9716 77.6046,12.9716</coordinates>
+      </LineString>
+    </MultiGeometry>
+  </Placemark>
+</Document>
+</kml>

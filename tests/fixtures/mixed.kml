@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>mixed</name>
+  <Placemark>
+    <name>square</name>
+    <description>100m class square near Bangalore</description>
+    <Polygon>
+      <outerBoundaryIs>
+        <LinearRing>
+          <coordinates>77.594139,12.971151,0 77.595061,12.971151,0 77.595061,12.972049,0 77.594139,12.972049,0 77.594139,12.971151,0</coordinates>
+        </LinearRing>
+      </outerBoundaryIs>
+    </Polygon>
+  </Placemark>
+  <Placemark>
+    <name>line</name>
+    <description>east-west segment</description>
+    <LineString>
+      <coordinates>77.5946,12.9716 77.6046,12.9716</coordinates>
+    </LineString>
+  </Placemark>
+  <Placemark>
+    <name>dot</name>
+    <description>single point</description>
+    <Point>
+      <coordinates>77.5946,12.9716</coordinates>
+    </Point>
+  </Placemark>
+</Document>
+</kml>
